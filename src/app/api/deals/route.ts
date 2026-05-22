@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       title, client_id, stage_id, property_id, value, commission_pct,
       commission_value, expected_close_date, notes,
     })
-    .select()
+    .select('*, clients(full_name, phone), properties(title, address), pipeline_stages(name, color)')
     .single()
 
   if (error) return err(error.message, 500)

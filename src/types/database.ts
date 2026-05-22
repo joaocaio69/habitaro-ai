@@ -148,6 +148,7 @@ export interface Deal {
   closed_at: string | null
   lost_reason: string | null
   notes: string | null
+  stage_changed_at: string
   created_at: string
   updated_at: string
 }
@@ -174,5 +175,48 @@ export interface Tag {
   agency_id: string
   name: string
   color: string
+  created_at: string
+}
+
+export type InstanceStatus = 'disconnected' | 'connecting' | 'connected'
+export type MessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'other'
+export type MessageStatus = 'pending' | 'sent' | 'delivered' | 'read' | 'failed'
+
+export interface ZaptosInstance {
+  id: string
+  agency_id: string
+  instance_name: string
+  token: string
+  status: InstanceStatus
+  phone_number: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Conversation {
+  id: string
+  agency_id: string
+  instance_id: string
+  contact_jid: string
+  contact_name: string | null
+  contact_phone: string
+  client_id: string | null
+  last_message_at: string | null
+  last_message_preview: string | null
+  unread_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface Message {
+  id: string
+  conversation_id: string
+  zaptos_message_id: string | null
+  from_me: boolean
+  content: string | null
+  type: MessageType
+  media_url: string | null
+  status: MessageStatus
+  timestamp: string
   created_at: string
 }

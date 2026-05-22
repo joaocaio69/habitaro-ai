@@ -10,6 +10,8 @@ import {
   Building2,
   Handshake,
   CalendarCheck,
+  MessageCircle,
+  Plug,
   LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,7 +21,9 @@ const navItems = [
   { href: '/clients',     label: 'Clientes',     icon: Users },
   { href: '/properties',  label: 'Imóveis',      icon: Building2 },
   { href: '/deals',       label: 'Negociações',  icon: Handshake },
-  { href: '/activities',  label: 'Atividades',   icon: CalendarCheck },
+  { href: '/agenda',      label: 'Agenda',        icon: CalendarCheck },
+  { href: '/chat',         label: 'Chat',          icon: MessageCircle },
+  { href: '/integrations', label: 'Integrações',   icon: Plug },
 ]
 
 export function Sidebar() {

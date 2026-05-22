@@ -11,21 +11,25 @@ export async function GET(request: NextRequest) {
   const deal_id = searchParams.get('deal_id')
   const client_id = searchParams.get('client_id')
   const broker_id = searchParams.get('broker_id')
+  const from_date = searchParams.get('from_date')
+  const to_date = searchParams.get('to_date')
   const page = Math.max(1, Number(searchParams.get('page') ?? 1))
-  const limit = Math.min(Number(searchParams.get('limit') ?? 20), 100)
-  const from = (page - 1) * limit
+  const limit = Math.min(Number(searchParams.get('limit') ?? 100), 500)
+  const offset = (page - 1) * limit
 
   let query = supabase
     .from('activities')
-    .select('*, clients(full_name), deals(title)', { count: 'exact' })
+    .select('*, clients(full_name, phone), deals(title)', { count: 'exact' })
     .order('scheduled_at', { ascending: true, nullsFirst: false })
-    .range(from, from + limit - 1)
+    .range(offset, offset + limit - 1)
 
   if (status) query = query.eq('status', status)
   if (type) query = query.eq('type', type)
   if (deal_id) query = query.eq('deal_id', deal_id)
   if (client_id) query = query.eq('client_id', client_id)
   if (broker_id) query = query.eq('broker_id', broker_id)
+  if (from_date) query = query.gte('scheduled_at', from_date)
+  if (to_date) query = query.lte('scheduled_at', to_date)
 
   const { data, error, count } = await query
   if (error) return err(error.message, 500)

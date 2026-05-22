@@ -45,6 +45,11 @@ export async function PUT(
     patch.closed_at = patch.closed_at ?? new Date().toISOString()
   }
 
+  // Track when deal moved to a new stage
+  if (patch.stage_id) {
+    patch.stage_changed_at = new Date().toISOString()
+  }
+
   const { data, error } = await supabase
     .from('deals')
     .update(patch)

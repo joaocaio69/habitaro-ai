@@ -54,3 +54,16 @@ export async function PUT(
   if (error) return err(error.message, 400)
   return ok(data)
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { user, supabase, profile } = await requireAuth()
+  if (!user || !profile?.agency_id) return err('Unauthorized', 401)
+
+  const { id } = await params
+  const { error } = await supabase.from('activities').delete().eq('id', id)
+  if (error) return err(error.message, 400)
+  return ok({ deleted: true })
+}
