@@ -155,6 +155,18 @@ export function ChatView({ instance: initialInstance, initialConversations }: Pr
           setConversations(prev => [payload.new as Conversation, ...prev])
         }
       )
+      // Conversation preview updates (last message, unread count)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'conversations' },
+        (payload) => {
+          const updated = payload.new as Conversation
+          setConversations(prev =>
+            prev.map(c => c.id === updated.id ? { ...c, ...updated } : c)
+              .sort((a, b) => (b.last_message_at ?? '').localeCompare(a.last_message_at ?? ''))
+          )
+        }
+      )
       // Message status updates
       .on(
         'postgres_changes',
