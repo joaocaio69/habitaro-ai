@@ -1,5 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { requireAuth, ok, err } from '@/lib/api'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { createGoogleEvent } from '@/lib/google-calendar'
 
 export async function GET(request: NextRequest) {
   const { user, supabase, profile } = await requireAuth()
@@ -60,5 +62,21 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return err(error.message, 500)
+
+  // Sync to Google Calendar if user has it connected and activity has a date
+  if (data.scheduled_at) {
+    const googleEventId = await createGoogleEvent(user.id, {
+      title: data.title,
+      description: data.description,
+      scheduled_at: data.scheduled_at,
+    })
+    if (googleEventId) {
+      await createAdminClient().from('activities').update({
+        google_event_id: googleEventId,
+        google_calendar_user_id: user.id,
+      }).eq('id', data.id)
+    }
+  }
+
   return ok(data, 201)
 }

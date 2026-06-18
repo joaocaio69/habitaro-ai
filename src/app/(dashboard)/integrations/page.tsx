@@ -16,11 +16,23 @@ export default async function IntegrationsPage() {
 
   if (!profile?.agency_id) redirect('/onboarding')
 
-  const { data: instance } = await supabase
-    .from('zaptos_instances')
-    .select('id, instance_name, status, phone_number, created_at')
-    .eq('agency_id', profile.agency_id)
-    .maybeSingle()
+  const [{ data: instance }, { data: googleConn }] = await Promise.all([
+    supabase
+      .from('zaptos_instances')
+      .select('id, instance_name, status, phone_number, created_at')
+      .eq('agency_id', profile.agency_id)
+      .maybeSingle(),
+    supabase
+      .from('google_calendar_connections')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ])
 
-  return <IntegrationsView instance={(instance ?? null) as ZaptosInstance | null} />
+  return (
+    <IntegrationsView
+      instance={(instance ?? null) as ZaptosInstance | null}
+      googleConnected={!!googleConn}
+    />
+  )
 }

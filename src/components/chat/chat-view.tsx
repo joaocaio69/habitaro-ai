@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   Search, Send, Phone, Check, CheckCheck,
   Image as ImageIcon, Mic, FileText, Settings,
-  Wifi, WifiOff, Loader2, ExternalLink,
+  WifiOff, Loader2, ExternalLink,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -246,13 +246,9 @@ export function ChatView({ instance: initialInstance, initialConversations }: Pr
         <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-sm">WhatsApp</span>
-            {!instance
-              ? <WifiOff className="h-3.5 w-3.5 text-muted-foreground/40" />
-              : instance.status === 'connected'
-              ? <Wifi className="h-3.5 w-3.5 text-green-500" />
-              : instance.status === 'connecting'
-              ? <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-500" />
-              : <WifiOff className="h-3.5 w-3.5 text-muted-foreground/50" />}
+            {instance
+              ? <span className="h-2 w-2 rounded-full bg-green-500" />
+              : <WifiOff className="h-3.5 w-3.5 text-muted-foreground/40" />}
           </div>
           <Link href="/integrations" className="text-muted-foreground hover:text-foreground transition-colors">
             <Settings className="h-4 w-4" />

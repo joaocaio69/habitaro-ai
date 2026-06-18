@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Wifi, WifiOff, Loader2, Copy, Trash2, Link2, CheckCircle2 } from 'lucide-react'
+import { useEffect } from 'react'
+import { Wifi, WifiOff, Loader2, Copy, Trash2, Link2, CheckCircle2, ExternalLink, Calendar, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,13 +30,22 @@ function statusBadge(status: string) {
 
 interface Props {
   instance: ZaptosInstance | null
+  googleConnected: boolean
 }
 
-export function IntegrationsView({ instance: initial }: Props) {
+export function IntegrationsView({ instance: initial, googleConnected: initialGoogle }: Props) {
   const [instance, setInstance] = useState(initial)
+  const [googleConnected, setGoogleConnected] = useState(initialGoogle)
+  const [googleNotice, setGoogleNotice] = useState<'ok' | 'error' | null>(null)
   const [instanceName, setInstanceName] = useState('')
   const [token, setToken] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('google_ok')) { setGoogleConnected(true); setGoogleNotice('ok') }
+    if (params.get('google_error')) setGoogleNotice('error')
+  }, [])
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -102,7 +112,16 @@ export function IntegrationsView({ instance: initial }: Props) {
               <p className="text-xs text-muted-foreground">WhatsApp para leads e corretores</p>
             </div>
           </div>
-          {instance && statusBadge(instance.status)}
+          {instance ? (
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+              <span className="h-2 w-2 rounded-full bg-green-500" />
+              Conectado
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+              <WifiOff className="h-3 w-3" /> Desconectado
+            </span>
+          )}
         </div>
 
         <div className="px-6 py-5 space-y-5">
@@ -182,7 +201,19 @@ export function IntegrationsView({ instance: initial }: Props) {
               </div>
             </div>
           ) : (
-            /* Connect form */
+            <>
+            <a
+              href="https://panel.zaptoswpp.com/registration/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-green-50 border border-green-200 hover:bg-green-100 transition-colors group"
+            >
+              <div>
+                <p className="text-sm font-semibold text-green-800">Ainda não tem conta na ZaptoWPP?</p>
+                <p className="text-xs text-green-700 mt-0.5">Crie sua conta e escolha um plano para começar.</p>
+              </div>
+              <ExternalLink className="h-4 w-4 text-green-700 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </a>
             <form onSubmit={handleConnect} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -212,6 +243,72 @@ export function IntegrationsView({ instance: initial }: Props) {
                   : 'Conectar ZaptoWPP'}
               </Button>
             </form>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Google Calendar card */}
+      <div className="rounded-xl border border-border bg-card">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+              <Calendar className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Google Calendar</p>
+              <p className="text-xs text-muted-foreground">Sincronize compromissos em tempo real</p>
+            </div>
+          </div>
+          {googleConnected
+            ? <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-full"><CheckCircle className="h-3 w-3" /> Conectado</span>
+            : <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-full"><WifiOff className="h-3 w-3" /> Não conectado</span>
+          }
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {googleNotice === 'ok' && (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5">
+              <CheckCircle className="h-4 w-4 shrink-0" />
+              Google Calendar conectado! Seus compromissos serão sincronizados automaticamente.
+            </div>
+          )}
+          {googleNotice === 'error' && (
+            <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-4 py-2.5">
+              Erro ao conectar. Tente novamente.
+            </p>
+          )}
+
+          {googleConnected ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Novos compromissos criados no CRM serão adicionados ao seu Google Calendar automaticamente. Alterações e exclusões também são sincronizadas.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={async () => {
+                  await fetch('/api/auth/google-calendar/disconnect', { method: 'POST' })
+                  setGoogleConnected(false)
+                  setGoogleNotice(null)
+                }}
+              >
+                Desconectar Google Calendar
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Conecte sua conta Google para sincronizar compromissos entre o CRM e o Google Calendar.
+              </p>
+              <Button asChild>
+                <a href="/api/auth/google-calendar" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  <span>Conectar Google Calendar</span>
+                </a>
+              </Button>
+            </div>
           )}
         </div>
       </div>

@@ -115,13 +115,61 @@ export async function POST(request: NextRequest) {
     } else {
       // Try to match existing CRM client by phone (last 8 digits)
       const tail = contactPhone.slice(-8)
-      const { data: client } = await supabase
+      const { data: existingClient } = await supabase
         .from('clients')
         .select('id')
         .eq('agency_id', instance.agency_id)
         .ilike('phone', `%${tail}`)
         .limit(1)
         .maybeSingle()
+
+      let clientId = existingClient?.id ?? null
+
+      // Inbound from unknown contact → auto-create lead + deal
+      if (!fromMe && !clientId) {
+        const displayName = contactName || `+${contactPhone}`
+
+        const { data: newClient } = await supabase
+          .from('clients')
+          .insert({
+            agency_id: instance.agency_id,
+            full_name: displayName,
+            phone: contactPhone,
+            status: 'lead',
+            source: 'whatsapp',
+          })
+          .select('id')
+          .single()
+
+        clientId = newClient?.id ?? null
+      }
+
+      // Auto-create deal in first pipeline stage for any new inbound conversation
+      if (!fromMe && clientId) {
+        const { data: firstStage } = await supabase
+          .from('pipeline_stages')
+          .select('id')
+          .eq('agency_id', instance.agency_id)
+          .eq('is_won', false)
+          .eq('is_lost', false)
+          .order('sort_order', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+
+        if (firstStage) {
+          const dealTitle = contactName
+            ? `WhatsApp — ${contactName}`
+            : `WhatsApp — +${contactPhone}`
+
+          await supabase.from('deals').insert({
+            agency_id: instance.agency_id,
+            client_id: clientId,
+            stage_id: firstStage.id,
+            title: dealTitle,
+            status: 'open',
+          })
+        }
+      }
 
       const { data: newConv } = await supabase
         .from('conversations')
@@ -131,7 +179,7 @@ export async function POST(request: NextRequest) {
           contact_jid: contactJid,
           contact_phone: contactPhone,
           contact_name: contactName,
-          client_id: client?.id ?? null,
+          client_id: clientId,
           last_message_at: timestamp,
           last_message_preview: content,
           unread_count: fromMe ? 0 : 1,

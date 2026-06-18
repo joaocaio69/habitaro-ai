@@ -244,7 +244,7 @@ export function KanbanBoard({ stages, initialDeals }: Props) {
     setDealsByStage(prev => {
       const next = new Map(prev)
       next.set(fromStageId!, (next.get(fromStageId!) ?? []).filter(d => d.id !== dealId))
-      next.set(targetStageId, [{ ...draggedDeal!, stage_id: targetStageId }, ...(next.get(targetStageId) ?? [])])
+      next.set(targetStageId, [{ ...draggedDeal!, stage_id: targetStageId, stage_changed_at: new Date().toISOString() }, ...(next.get(targetStageId) ?? [])])
       return next
     })
 

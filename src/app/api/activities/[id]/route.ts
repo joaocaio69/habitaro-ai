@@ -1,5 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { requireAuth, ok, err } from '@/lib/api'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { updateGoogleEvent, deleteGoogleEvent } from '@/lib/google-calendar'
 
 const ALLOWED_FIELDS = [
   'type', 'status', 'title', 'description', 'deal_id', 'client_id',
@@ -52,6 +54,16 @@ export async function PUT(
     .single()
 
   if (error) return err(error.message, 400)
+
+  // Sync update to Google Calendar
+  if (data.google_event_id && data.google_calendar_user_id) {
+    await updateGoogleEvent(data.google_calendar_user_id, data.google_event_id, {
+      title: data.title,
+      description: data.description,
+      scheduled_at: data.scheduled_at,
+    })
+  }
+
   return ok(data)
 }
 
@@ -63,7 +75,18 @@ export async function DELETE(
   if (!user || !profile?.agency_id) return err('Unauthorized', 401)
 
   const { id } = await params
+
+  // Fetch first to get google_event_id before deleting
+  const { data: existing } = await createAdminClient()
+    .from('activities').select('google_event_id, google_calendar_user_id').eq('id', id).single()
+
   const { error } = await supabase.from('activities').delete().eq('id', id)
   if (error) return err(error.message, 400)
+
+  // Delete from Google Calendar
+  if (existing?.google_event_id && existing?.google_calendar_user_id) {
+    await deleteGoogleEvent(existing.google_calendar_user_id, existing.google_event_id)
+  }
+
   return ok({ deleted: true })
 }
