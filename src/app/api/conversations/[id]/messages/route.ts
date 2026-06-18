@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server'
 import { requireAuth, ok, err } from '@/lib/api'
 
-const ZAPTOS_BASE = 'https://api.zaptos.com.br'
+const ZAPTOS_BASE = 'https://api3zaptoswpp.uazapi.com'
 
 // GET — fetch messages + mark conversation as read
 export async function GET(
@@ -72,11 +72,11 @@ export async function POST(
   const instance = conv.zaptos_instances as unknown as { instance_name: string; token: string } | null
   if (!instance) return err('Instance not configured', 400)
 
-  // Send via ZaptoWPP
-  const zapRes = await fetch(`${ZAPTOS_BASE}/message/sendText/${instance.instance_name}`, {
+  // Send via ZaptoWPP (uazapiGO format)
+  const zapRes = await fetch(`${ZAPTOS_BASE}/chat/sendText/${instance.instance_name}`, {
     method: 'POST',
     headers: { token: instance.token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ number: conv.contact_phone, text }),
+    body: JSON.stringify({ phone: conv.contact_phone, message: text }),
   })
 
   const zapJson = await zapRes.json().catch(() => ({})) as Record<string, unknown>
