@@ -281,22 +281,26 @@ export default async function PropertyDetailPage({
             <div className="rounded-xl ring-1 ring-foreground/10 p-5 space-y-3">
               <h3 className="font-semibold text-sm">Negociações</h3>
               <div className="divide-y">
-                {deals.map((deal: { id: string; title: string; status: string; value: number | null; pipeline_stages: { name: string; color: string } | null; clients: { full_name: string } | null }) => (
+                {deals.map((deal: { id: string; title: string; status: string; value: number | null; pipeline_stages: { name: string; color: string }[] | null; clients: { full_name: string }[] | null }) => {
+                  const stage = Array.isArray(deal.pipeline_stages) ? deal.pipeline_stages[0] : null
+                  const client = Array.isArray(deal.clients) ? deal.clients[0] : null
+                  return (
                   <Link key={deal.id} href={`/deals/${deal.id}`}
                     className="flex items-center justify-between py-2.5 hover:text-primary transition-colors">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{deal.title}</p>
-                      <p className="text-xs text-muted-foreground">{deal.clients?.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{client?.full_name}</p>
                     </div>
-                    {deal.pipeline_stages && (
+                    {stage && (
                       <span
                         className="text-xs px-2 py-0.5 rounded-full text-white shrink-0 ml-2"
-                        style={{ backgroundColor: deal.pipeline_stages.color }}
+                        style={{ backgroundColor: stage.color }}
                       >
-                        {deal.pipeline_stages.name}
+                        {stage.name}
                       </span>
                     )}
                   </Link>
+                  )})
                 ))}
               </div>
             </div>
