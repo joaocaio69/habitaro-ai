@@ -41,6 +41,8 @@ export async function POST(request: NextRequest) {
   let body: Record<string, unknown>
   try { body = await request.json() } catch { return Response.json({ ok: true }) }
 
+  console.log('[zaptos-webhook] body:', JSON.stringify(body))
+
   const event = body.event as string | undefined
   const instanceName = body.instance as string | undefined
   const data = body.data as MsgObj | undefined
