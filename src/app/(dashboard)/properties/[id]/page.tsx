@@ -281,9 +281,10 @@ export default async function PropertyDetailPage({
             <div className="rounded-xl ring-1 ring-foreground/10 p-5 space-y-3">
               <h3 className="font-semibold text-sm">Negociações</h3>
               <div className="divide-y">
-                {deals.map((deal: { id: string; title: string; status: string; value: number | null; pipeline_stages: { name: string; color: string }[] | null; clients: { full_name: string }[] | null }) => {
-                  const stage = Array.isArray(deal.pipeline_stages) ? deal.pipeline_stages[0] : null
-                  const client = Array.isArray(deal.clients) ? deal.clients[0] : null
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(deals as any[]).map((deal) => {
+                  const stage = Array.isArray(deal.pipeline_stages) ? deal.pipeline_stages[0] : deal.pipeline_stages
+                  const client = Array.isArray(deal.clients) ? deal.clients[0] : deal.clients
                   return (
                   <Link key={deal.id} href={`/deals/${deal.id}`}
                     className="flex items-center justify-between py-2.5 hover:text-primary transition-colors">
@@ -300,8 +301,8 @@ export default async function PropertyDetailPage({
                       </span>
                     )}
                   </Link>
-                  )})
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
