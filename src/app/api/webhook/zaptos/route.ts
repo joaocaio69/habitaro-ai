@@ -1,7 +1,8 @@
 import { type NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-// ── helpers ────────────────────────────────────────────────
+type MsgObj = Record<string, unknown>
+
 function phoneFromJid(jid: string) {
   return jid.split('@')[0]
 }
@@ -10,79 +11,64 @@ function isGroupJid(jid: string) {
   return jid.endsWith('@g.us') || jid === 'status@broadcast'
 }
 
-type MsgObj = Record<string, unknown>
+function extractContent(msg: MsgObj): { content: string | null; type: string } {
+  const text = msg.text as string | undefined
+  const mediaType = msg.mediaType as string | undefined
+  const type = (msg.type as string) || 'text'
 
-function extractContent(message: MsgObj): { content: string | null; type: string } {
-  if (!message) return { content: null, type: 'text' }
-  if (typeof message.conversation === 'string') return { content: message.conversation, type: 'text' }
-  const ext = message.extendedTextMessage as MsgObj | undefined
-  if (typeof ext?.text === 'string') return { content: ext.text, type: 'text' }
-  if (message.imageMessage) return { content: ((message.imageMessage as MsgObj).caption as string) || null, type: 'image' }
-  if (message.videoMessage) return { content: ((message.videoMessage as MsgObj).caption as string) || null, type: 'video' }
-  if (message.audioMessage) return { content: null, type: 'audio' }
-  if (message.documentMessage) return { content: ((message.documentMessage as MsgObj).fileName as string) || null, type: 'document' }
-  if (message.stickerMessage) return { content: null, type: 'sticker' }
-  return { content: null, type: 'other' }
+  if (text) return { content: text, type: 'text' }
+  if (mediaType === 'image') return { content: null, type: 'image' }
+  if (mediaType === 'video') return { content: null, type: 'video' }
+  if (mediaType === 'audio' || mediaType === 'ptt') return { content: null, type: 'audio' }
+  if (mediaType === 'document') return { content: null, type: 'document' }
+  if (type === 'sticker') return { content: null, type: 'sticker' }
+  return { content: null, type: 'text' }
 }
 
-function mapStatus(raw: string): string {
-  const map: Record<string, string> = {
-    PENDING: 'pending',
-    SERVER_ACK: 'sent',
-    DELIVERY_ACK: 'delivered',
-    READ: 'read',
-    ERROR: 'failed',
-  }
-  return map[raw] ?? 'sent'
-}
-
-// ── route ──────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  let body: Record<string, unknown>
+  let body: MsgObj
   try { body = await request.json() } catch { return Response.json({ ok: true }) }
 
-  console.log('[zaptos-webhook] body:', JSON.stringify(body))
+  // uazapiGO format: EventType + instanceName
+  const eventType = body.EventType as string | undefined
+  const instanceName = (body.instanceName as string | undefined)
 
-  const event = body.event as string | undefined
-  const instanceName = body.instance as string | undefined
-  const data = body.data as MsgObj | undefined
-
-  if (!event || !instanceName) return Response.json({ ok: true })
+  if (!eventType || !instanceName) return Response.json({ ok: true })
 
   const supabase = createAdminClient()
 
   // ── connection status ──────────────────────────────────
-  if (event === 'connection.update') {
-    const state = (data?.state as string) ?? ''
+  if (eventType === 'connection') {
+    const state = (body.state as string) ?? ''
     const status = state === 'open' ? 'connected' : state === 'connecting' ? 'connecting' : 'disconnected'
-    const meId = ((data?.me as MsgObj)?.id as string) ?? ''
-    const phone = meId ? phoneFromJid(meId) : undefined
-
     await supabase
       .from('zaptos_instances')
-      .update({ status, ...(phone ? { phone_number: phone } : {}) })
+      .update({ status })
       .eq('instance_name', instanceName)
-
     return Response.json({ ok: true })
   }
 
   // ── new message ────────────────────────────────────────
-  if (event === 'messages.upsert') {
-    const key = data?.key as MsgObj | undefined
-    const remoteJid = key?.remoteJid as string | undefined
-    if (!remoteJid || isGroupJid(remoteJid)) return Response.json({ ok: true })
+  if (eventType === 'messages') {
+    const message = body.message as MsgObj | undefined
+    const chat = body.chat as MsgObj | undefined
 
-    const fromMe = Boolean(key?.fromMe)
-    const messageId = key?.id as string | undefined
-    const contactJid = remoteJid
+    if (!message) return Response.json({ ok: true })
+
+    const contactJid = message.chatid as string | undefined
+    if (!contactJid || isGroupJid(contactJid) || Boolean(message.isGroup)) {
+      return Response.json({ ok: true })
+    }
+
+    const fromMe = Boolean(message.fromMe)
+    const messageId = message.messageid as string | undefined
     const contactPhone = phoneFromJid(contactJid)
-    const contactName = (data?.pushName as string) || null
-    const { content, type } = extractContent((data?.message as MsgObj) ?? {})
-    const rawTs = data?.messageTimestamp
-    const timestamp = rawTs
-      ? new Date(Number(rawTs) * 1000).toISOString()
-      : new Date().toISOString()
-    const status = fromMe ? mapStatus((data?.status as string) ?? 'PENDING') : 'read'
+    const contactName = (chat?.wa_contactName as string) || (chat?.wa_name as string) || null
+    const { content, type } = extractContent(message)
+    const rawTs = message.messageTimestamp
+    // uazapiGO sends timestamp already in milliseconds
+    const timestamp = rawTs ? new Date(Number(rawTs)).toISOString() : new Date().toISOString()
+    const msgStatus = fromMe ? 'pending' : 'read'
 
     // Find instance
     const { data: instance } = await supabase
@@ -115,7 +101,6 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', existing.id)
     } else {
-      // Try to match existing CRM client by phone (last 8 digits)
       const tail = contactPhone.slice(-8)
       const { data: existingClient } = await supabase
         .from('clients')
@@ -127,10 +112,8 @@ export async function POST(request: NextRequest) {
 
       let clientId = existingClient?.id ?? null
 
-      // Inbound from unknown contact → auto-create lead + deal
       if (!fromMe && !clientId) {
         const displayName = contactName || `+${contactPhone}`
-
         const { data: newClient } = await supabase
           .from('clients')
           .insert({
@@ -142,11 +125,9 @@ export async function POST(request: NextRequest) {
           })
           .select('id')
           .single()
-
         clientId = newClient?.id ?? null
       }
 
-      // Auto-create deal in first pipeline stage for any new inbound conversation
       if (!fromMe && clientId) {
         const { data: firstStage } = await supabase
           .from('pipeline_stages')
@@ -159,15 +140,11 @@ export async function POST(request: NextRequest) {
           .maybeSingle()
 
         if (firstStage) {
-          const dealTitle = contactName
-            ? `WhatsApp — ${contactName}`
-            : `WhatsApp — +${contactPhone}`
-
           await supabase.from('deals').insert({
             agency_id: instance.agency_id,
             client_id: clientId,
             stage_id: firstStage.id,
-            title: dealTitle,
+            title: contactName ? `WhatsApp — ${contactName}` : `WhatsApp — +${contactPhone}`,
             status: 'open',
           })
         }
@@ -193,7 +170,6 @@ export async function POST(request: NextRequest) {
       conversationId = newConv.id
     }
 
-    // Insert message (idempotent via unique zaptos_message_id)
     if (messageId) {
       await supabase.from('messages').upsert(
         {
@@ -202,28 +178,13 @@ export async function POST(request: NextRequest) {
           from_me: fromMe,
           content,
           type,
-          status,
+          status: msgStatus,
           timestamp,
         },
         { onConflict: 'zaptos_message_id', ignoreDuplicates: true }
       )
     }
 
-    return Response.json({ ok: true })
-  }
-
-  // ── message status updates ─────────────────────────────
-  if (event === 'messages.update') {
-    const updates = (Array.isArray(data) ? data : [data]) as MsgObj[]
-    for (const u of updates) {
-      const msgId = ((u?.key as MsgObj)?.id) as string | undefined
-      const newStatus = ((u?.update as MsgObj)?.status) as string | undefined
-      if (!msgId || !newStatus) continue
-      await supabase
-        .from('messages')
-        .update({ status: mapStatus(newStatus) })
-        .eq('zaptos_message_id', msgId)
-    }
     return Response.json({ ok: true })
   }
 
