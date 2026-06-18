@@ -78,10 +78,10 @@ export function LeadModal({ open, client, onClose, onSuccess }: Props) {
         intent: client.intent ?? '',
         budget_min: client.budget_min != null ? String(client.budget_min) : '',
         budget_max: client.budget_max != null ? String(client.budget_max) : '',
-        preferred_type: (client as Record<string, unknown>).preferred_type as string ?? '',
-        preferred_location: (client as Record<string, unknown>).preferred_location as string ?? '',
-        preferred_bedrooms: (client as Record<string, unknown>).preferred_bedrooms != null
-          ? String((client as Record<string, unknown>).preferred_bedrooms) : '',
+        preferred_type: (client as unknown as Record<string, unknown>).preferred_type as string ?? '',
+        preferred_location: (client as unknown as Record<string, unknown>).preferred_location as string ?? '',
+        preferred_bedrooms: (client as unknown as Record<string, unknown>).preferred_bedrooms != null
+          ? String((client as unknown as Record<string, unknown>).preferred_bedrooms) : '',
         notes: client.notes ?? '',
       })
     } else {

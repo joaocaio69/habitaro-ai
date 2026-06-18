@@ -64,17 +64,20 @@ export async function POST(request: NextRequest) {
   if (error) return err(error.message, 500)
 
   // Sync to Google Calendar if user has it connected and activity has a date
-  if (data.scheduled_at) {
-    const googleEventId = await createGoogleEvent(user.id, {
-      title: data.title,
-      description: data.description,
-      scheduled_at: data.scheduled_at,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actData = data as any
+  const userId = (user as { id: string }).id
+  if (actData?.scheduled_at) {
+    const googleEventId = await createGoogleEvent(userId, {
+      title: actData.title,
+      description: actData.description,
+      scheduled_at: actData.scheduled_at,
     })
     if (googleEventId) {
       await createAdminClient().from('activities').update({
         google_event_id: googleEventId,
-        google_calendar_user_id: user.id,
-      }).eq('id', data.id)
+        google_calendar_user_id: userId,
+      }).eq('id', actData.id)
     }
   }
 

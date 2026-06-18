@@ -302,11 +302,9 @@ export function IntegrationsView({ instance: initial, googleConnected: initialGo
               <p className="text-sm text-muted-foreground">
                 Conecte sua conta Google para sincronizar compromissos entre o CRM e o Google Calendar.
               </p>
-              <Button asChild>
-                <a href="/api/auth/google-calendar" className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 shrink-0" />
-                  <span>Conectar Google Calendar</span>
-                </a>
+              <Button className="gap-2" onClick={() => { window.location.href = '/api/auth/google-calendar' }}>
+                <Calendar className="h-4 w-4 shrink-0" />
+                <span>Conectar Google Calendar</span>
               </Button>
             </div>
           )}
