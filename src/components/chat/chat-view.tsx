@@ -83,7 +83,6 @@ export function ChatView({ instance: initialInstance, initialConversations }: Pr
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [search, setSearch] = useState('')
-  const [showSettings] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -122,11 +121,9 @@ export function ChatView({ instance: initialInstance, initialConversations }: Pr
           const msg = payload.new as Message
           // Update message list if this conversation is open
           setMessages(prev => {
-            if (prev.length > 0 && prev[0].conversation_id === msg.conversation_id) {
-              if (prev.find(m => m.id === msg.id)) return prev
-              return [...prev, msg]
-            }
-            return prev
+            if (selected?.id !== msg.conversation_id) return prev
+            if (prev.find(m => m.id === msg.id)) return prev
+            return [...prev, msg]
           })
           // Update conversation preview
           setConversations(prev =>

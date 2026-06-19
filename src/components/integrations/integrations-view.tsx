@@ -2,31 +2,12 @@
 
 import { useState } from 'react'
 import { useEffect } from 'react'
-import { Wifi, WifiOff, Loader2, Copy, Trash2, Link2, CheckCircle2, ExternalLink, Calendar, CheckCircle } from 'lucide-react'
+import { WifiOff, Loader2, Copy, Trash2, Link2, CheckCircle2, ExternalLink, Calendar, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ZaptosInstance } from '@/types/database'
 
-function statusBadge(status: string) {
-  if (status === 'connected')
-    return (
-      <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
-        <Wifi className="h-3 w-3" /> Conectado
-      </span>
-    )
-  if (status === 'connecting')
-    return (
-      <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
-        <Loader2 className="h-3 w-3 animate-spin" /> Conectando…
-      </span>
-    )
-  return (
-    <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-      <WifiOff className="h-3 w-3" /> Desconectado
-    </span>
-  )
-}
 
 interface Props {
   instance: ZaptosInstance | null
