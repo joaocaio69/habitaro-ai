@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server'
 import { requireAuth, ok, err } from '@/lib/api'
 
-const ZAPTOS_BASE = 'https://api3zaptoswpp.uazapi.com'
+const ZAPTOS_BASE = 'https://api.zaptos.com.br'
 
 // GET — fetch messages + mark conversation as read
 export async function GET(
@@ -73,7 +73,7 @@ export async function POST(
   if (!instance) return err('Instance not configured', 400)
 
   // Send via ZaptoWPP (uazapiGO format)
-  const sendBody = { phone: conv.contact_phone, text }
+  const sendBody = { number: conv.contact_phone, text }
   const zapRes = await fetch(`${ZAPTOS_BASE}/send/text`, {
     method: 'POST',
     headers: { token: instance.token, 'Content-Type': 'application/json' },
