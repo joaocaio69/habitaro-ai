@@ -73,10 +73,11 @@ export async function POST(
   if (!instance) return err('Instance not configured', 400)
 
   // Send via ZaptoWPP (uazapiGO format)
-  const zapRes = await fetch(`${ZAPTOS_BASE}/chat/sendText`, {
+  const sendBody = { phone: conv.contact_phone, text }
+  const zapRes = await fetch(`${ZAPTOS_BASE}/send/text`, {
     method: 'POST',
     headers: { token: instance.token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone: conv.contact_phone, message: text }),
+    body: JSON.stringify(sendBody),
   })
 
   const zapJson = await zapRes.json().catch(() => ({})) as Record<string, unknown>
