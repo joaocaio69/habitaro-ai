@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { ok, err } from '@/lib/api'
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://habitaro-ai.vercel.app'
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const email = typeof body.email === 'string' ? body.email : undefined
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       ...(email ? { customer_email: email } : {}),
