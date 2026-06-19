@@ -32,14 +32,13 @@ export async function POST(request: NextRequest) {
   // Verify token against ZaptoWPP (check connection status)
   let remoteStatus = 'disconnected'
   try {
-    const res = await fetch(`${ZAPTOS_BASE}/instance/connectionState/${instance_name}`, {
+    const res = await fetch(`${ZAPTOS_BASE}/instance/status`, {
       headers: { token, 'Content-Type': 'application/json' },
     })
     if (res.ok) {
       const json = await res.json() as Record<string, unknown>
-      const state = (json?.state as string) ?? (json?.instance as Record<string,unknown>)?.state as string
-      if (state === 'open') remoteStatus = 'connected'
-      else if (state === 'connecting') remoteStatus = 'connecting'
+      const status = json?.status as Record<string, unknown> | undefined
+      if (status?.connected) remoteStatus = 'connected'
     }
   } catch { /* ignore — save anyway */ }
 
