@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server'
 import { requireAuth, ok, err } from '@/lib/api'
 
-const ZAPTOS_BASE = 'https://api.zaptos.com.br'
+const ZAPTOS_BASE = 'https://api3zaptoswpp.uazapi.com'
 
 // GET — fetch messages + mark conversation as read
 export async function GET(
