@@ -81,7 +81,6 @@ export async function POST(
   })
 
   const zapJson = await zapRes.json().catch(() => ({})) as Record<string, unknown>
-  console.log('[zaptos-send] status:', zapRes.status, 'body:', JSON.stringify(zapJson))
 
   if (!zapRes.ok) {
     return err((zapJson.message as string) ?? 'Failed to send message', 502)
