@@ -35,6 +35,8 @@ export default function SettingsPage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [accountError, setAccountError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError, setPortalError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -268,14 +270,23 @@ export default function SettingsPage() {
             variant="outline"
             size="sm"
             className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+            disabled={portalLoading}
             onClick={async () => {
+              setPortalLoading(true)
+              setPortalError(null)
               const res = await fetch('/api/stripe/portal', { method: 'POST' })
               const data = await res.json() as { url?: string; error?: string }
-              if (data.url) window.location.href = data.url
+              if (data.url) {
+                window.location.href = data.url
+              } else {
+                setPortalError(data.error ?? 'Erro ao abrir portal. Tente novamente.')
+                setPortalLoading(false)
+              }
             }}
           >
-            Cancelar assinatura
+            {portalLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Abrindo…</> : 'Cancelar assinatura'}
           </Button>
+          {portalError && <p className="text-sm text-destructive">{portalError}</p>}
         </CardContent>
       </Card>
 
