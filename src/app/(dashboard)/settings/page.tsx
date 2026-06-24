@@ -256,12 +256,26 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="text-base">Plano</CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">Habitaro AI Pro</p>
-            <p className="text-xs text-muted-foreground">R$ 297/mês · Renovação automática</p>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Habitaro AI Pro</p>
+              <p className="text-xs text-muted-foreground">R$ 147/mês · Renovação automática</p>
+            </div>
+            <span className="text-xs bg-primary text-primary-foreground px-2.5 py-1 rounded-full font-medium">Ativo</span>
           </div>
-          <span className="text-xs bg-primary text-primary-foreground px-2.5 py-1 rounded-full font-medium">Ativo</span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+            onClick={async () => {
+              const res = await fetch('/api/stripe/portal', { method: 'POST' })
+              const data = await res.json() as { url?: string; error?: string }
+              if (data.url) window.location.href = data.url
+            }}
+          >
+            Cancelar assinatura
+          </Button>
         </CardContent>
       </Card>
 
