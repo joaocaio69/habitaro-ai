@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { Loader2, LogOut, CheckCircle2 } from 'lucide-react'
 
 type Profile = {
@@ -162,7 +161,7 @@ export default function SettingsPage() {
               />
             </div>
 
-            <Separator />
+            <hr className="border-border" />
 
             <p className="text-sm font-medium text-foreground">Perfil profissional</p>
 
