@@ -6,11 +6,12 @@ export async function POST(request: Request) {
   if (!user || !supabase) return err('Unauthorized', 401)
 
   // Verify the user registered via a paid invitation
+  const { data: { user: authUser } } = await supabase.auth.getUser()
   const admin = createAdminClient()
   const { data: invitation } = await admin
     .from('pending_invitations')
     .select('id')
-    .eq('email', user.email!)
+    .eq('email', authUser?.email ?? '')
     .not('used_at', 'is', null)
     .maybeSingle()
 
