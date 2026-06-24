@@ -44,7 +44,7 @@ export default function PlanosPage() {
           <p className="text-sm font-semibold text-background/60 uppercase tracking-widest mb-1">Plano Pro</p>
           <div className="flex items-end justify-center gap-1">
             <span className="text-background/60 text-lg self-start mt-2">R$</span>
-            <span className="text-5xl font-bold text-background tracking-tight">297</span>
+            <span className="text-5xl font-bold text-background tracking-tight">147</span>
             <span className="text-background/60 text-base self-end mb-1">/mês</span>
           </div>
           <p className="mt-3 text-sm text-background/50">Cancele quando quiser</p>
