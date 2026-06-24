@@ -1,8 +1,20 @@
 import { requireAuth, ok, err } from '@/lib/api'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: Request) {
   const { user, supabase } = await requireAuth()
   if (!user || !supabase) return err('Unauthorized', 401)
+
+  // Verify the user registered via a paid invitation
+  const admin = createAdminClient()
+  const { data: invitation } = await admin
+    .from('pending_invitations')
+    .select('id')
+    .eq('email', user.email!)
+    .not('used_at', 'is', null)
+    .maybeSingle()
+
+  if (!invitation) return err('Acesso não autorizado. Assine um plano para continuar.', 403)
 
   const { name, cnpj, phone, city, state } = await request.json()
   if (!name?.trim()) return err('Nome é obrigatório.', 400)
