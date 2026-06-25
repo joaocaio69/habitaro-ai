@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function OnboardingPage() {
   const [name, setName] = useState('')
-  const [cnpj, setCnpj] = useState('')
+  const [docType, setDocType] = useState<'cnpj' | 'cpf'>('cnpj')
+  const [doc, setDoc] = useState('')
   const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
   const [state, setState] = useState('')
@@ -26,12 +27,12 @@ export default function OnboardingPage() {
     const res = await fetch('/api/onboarding', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, cnpj, phone, city, state }),
+      body: JSON.stringify({ name, cnpj: doc || null, phone, city, state }),
     })
 
     if (!res.ok) {
       const { error: msg } = await res.json()
-      setError(msg ?? 'Erro ao criar imobiliária.')
+      setError(msg ?? 'Erro ao criar cadastro.')
       setLoading(false)
       return
     }
@@ -44,31 +45,42 @@ export default function OnboardingPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Bem-vindo ao Habitaro AI</CardTitle>
-          <CardDescription>Configure sua imobiliária para começar</CardDescription>
+          <CardDescription>Preencha seus dados para começar</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome da imobiliária <span className="text-destructive">*</span></Label>
+              <Label htmlFor="name">Nome <span className="text-destructive">*</span></Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="Imobiliária São Paulo"
+                placeholder="Seu nome ou nome da imobiliária"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="doc">{docType === 'cnpj' ? 'CNPJ' : 'CPF'}</Label>
+                <button
+                  type="button"
+                  onClick={() => { setDocType(d => d === 'cnpj' ? 'cpf' : 'cnpj'); setDoc('') }}
+                  className="text-xs text-muted-foreground hover:text-foreground underline"
+                >
+                  Usar {docType === 'cnpj' ? 'CPF' : 'CNPJ'}
+                </button>
+              </div>
               <Input
-                id="cnpj"
+                id="doc"
                 type="text"
-                placeholder="00.000.000/0001-00"
-                value={cnpj}
-                onChange={(e) => setCnpj(e.target.value)}
+                placeholder={docType === 'cnpj' ? '00.000.000/0001-00' : '000.000.000-00'}
+                value={doc}
+                onChange={(e) => setDoc(e.target.value)}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone</Label>
               <Input
@@ -104,7 +116,7 @@ export default function OnboardingPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading || !name.trim()}>
-              {loading ? 'Criando...' : 'Criar imobiliária'}
+              {loading ? 'Salvando...' : 'Continuar'}
             </Button>
           </form>
         </CardContent>
