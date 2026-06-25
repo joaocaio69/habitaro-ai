@@ -30,11 +30,18 @@ function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const code = searchParams.get('code')
+    const tokenHash = searchParams.get('token_hash')
+    const type = searchParams.get('type')
+    const errorCode = searchParams.get('error_code')
 
-    if (code) {
-      // PKCE flow — exchange code for session
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+    if (errorCode) {
+      setLinkError('Link inválido ou expirado. Solicite um novo.')
+      return
+    }
+
+    if (tokenHash && type === 'recovery') {
+      // Token hash flow — safe against email prefetch
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }).then(({ error }) => {
         if (error) {
           setLinkError('Link inválido ou expirado. Solicite um novo.')
         } else {
@@ -42,7 +49,7 @@ function ResetPasswordForm() {
         }
       })
     } else {
-      // Implicit/hash flow — session established automatically by SDK
+      // Fallback: implicit/hash flow
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
         if (event === 'PASSWORD_RECOVERY') setReady(true)
       })
