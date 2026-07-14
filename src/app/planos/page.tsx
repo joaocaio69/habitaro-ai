@@ -20,7 +20,7 @@ export default function PlanosPage() {
   async function handleCheckout() {
     setLoading(true)
     try {
-      const res = await fetch('/api/stripe/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      const res = await fetch('/api/hypercash/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
       const json = await res.json() as { url?: string; error?: string }
       if (json.url) window.location.href = json.url
       else alert(json.error ?? 'Erro ao iniciar pagamento.')
@@ -70,7 +70,7 @@ export default function PlanosPage() {
               : 'Assinar agora'}
           </Button>
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            Pagamento seguro via Stripe · Cartão de crédito
+            Pagamento seguro via Hypercash · Cartão de crédito
           </p>
         </div>
       </div>

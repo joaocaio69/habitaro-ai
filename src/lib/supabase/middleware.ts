@@ -35,6 +35,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/pagamento') ||
     pathname.startsWith('/api/invite') ||
     pathname.startsWith('/api/stripe') ||
+    pathname.startsWith('/api/hypercash') ||
     pathname.startsWith('/api/webhook')
 
   if (!user && !isAuthRoute && !isPublicRoute) {
