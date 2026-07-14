@@ -20,7 +20,7 @@ export default function PlanosPage() {
   async function handleCheckout() {
     setLoading(true)
     try {
-      const res = await fetch('/api/hypercash/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      const res = await fetch('/api/hypercash/checkout', { method: 'POST' })
       const json = await res.json() as { url?: string; error?: string }
       if (json.url) window.location.href = json.url
       else alert(json.error ?? 'Erro ao iniciar pagamento.')
@@ -31,15 +31,12 @@ export default function PlanosPage() {
 
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col items-center justify-center p-6">
-      {/* Header */}
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold tracking-tight">Habitaro AI</h1>
         <p className="mt-2 text-muted-foreground text-base">O CRM completo para a sua imobiliária</p>
       </div>
 
-      {/* Card */}
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-        {/* Plan header */}
         <div className="bg-foreground px-8 py-8 text-center">
           <p className="text-sm font-semibold text-background/60 uppercase tracking-widest mb-1">Plano Pro</p>
           <div className="flex items-end justify-center gap-1">
@@ -50,7 +47,6 @@ export default function PlanosPage() {
           <p className="mt-3 text-sm text-background/50">Cancele quando quiser</p>
         </div>
 
-        {/* Features */}
         <div className="px-8 py-7 space-y-3.5">
           {features.map(f => (
             <div key={f} className="flex items-start gap-3">
@@ -62,7 +58,6 @@ export default function PlanosPage() {
           ))}
         </div>
 
-        {/* CTA */}
         <div className="px-8 pb-8">
           <Button className="w-full h-11 text-base" onClick={handleCheckout} disabled={loading}>
             {loading

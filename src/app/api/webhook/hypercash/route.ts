@@ -11,20 +11,26 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null) as Record<string, unknown> | null
   if (!body) return Response.json({ error: 'Invalid body' }, { status: 400 })
 
-  if (body.type !== 'transaction') return Response.json({ ok: true })
+  console.log('[hypercash-webhook] received:', JSON.stringify(body))
 
   const data = body.data as Record<string, unknown> | undefined
   const status = (data?.status as string | undefined)?.toLowerCase()
+
+  // Accept both transaction and subscription events when status is paid
   if (status !== 'paid') return Response.json({ ok: true })
 
   const transactionId = (body.objectId ?? data?.id) as string | undefined
   const customer = data?.customer as Record<string, unknown> | undefined
   const email = customer?.email as string | undefined
 
-  if (!email || !transactionId) return Response.json({ ok: true })
+  if (!email || !transactionId) {
+    console.warn('[hypercash-webhook] missing email or transactionId:', { email, transactionId })
+    return Response.json({ ok: true })
+  }
 
   const supabase = createAdminClient()
 
+  // Idempotency — skip if already processed
   const { data: existing } = await supabase
     .from('pending_invitations')
     .select('id')
